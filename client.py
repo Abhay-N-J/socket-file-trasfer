@@ -1,20 +1,13 @@
-
 import socket
 import ssl
 import os
 from tkinter import *
 from tkinter import filedialog
 
-<<<<<<< HEAD
 
 HOST = '127.0.0.1'  # The server's hostname or IP address
 PORT = 65432       # The port used by the server
 
-=======
-HOST = '127.0.0.1'  # The server's hostname or IP address
-PORT = 65432       # The port used by the server
-
->>>>>>> b37b4ab (First Commit)
 client_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 client_context.check_hostname = False
 client_context.load_verify_locations(cafile="server.crt")
@@ -52,10 +45,7 @@ def select_dir():
 
 def upload():
     filename = file_entry.get()
-<<<<<<< HEAD
     size = os.path.getsize(filename)
-=======
->>>>>>> b37b4ab (First Commit)
     filename_1 = ""
     for i in filename[::-1]:
         if i == '/':
@@ -82,10 +72,7 @@ def upload():
                 flag = ssl_socket.recv(1024).decode()
                 if bool(flag):
                     ssl_socket.sendall(filename_1.encode())
-<<<<<<< HEAD
                     ssl_socket.sendall(str(size).encode())
-=======
->>>>>>> b37b4ab (First Commit)
                     with open(filename, 'rb') as f:
                         data = f.read(1024)
                         while data:
@@ -104,10 +91,7 @@ def upload():
 
 def download():
     filename = file_entry.get()
-<<<<<<< HEAD
     # size = os.path.getsize(filename)
-=======
->>>>>>> b37b4ab (First Commit)
     filename_1 = ""
     for i in filename[::-1]:
         if i == '/':
@@ -133,10 +117,7 @@ def download():
                 if bool(flag):
                     print(filename)
                     ssl_socket.sendall(filename.encode())
-<<<<<<< HEAD
                     # ssl_socket.sendall(str(size).encode())
-=======
->>>>>>> b37b4ab (First Commit)
                     if not os.path.exists('./Downloads'):
                         os.mkdir('./Downloads')
                     with open('./Downloads/' + filename, 'wb') as f:
