@@ -145,7 +145,6 @@ def download():
                                 string = "Loading: [{}] {}\n".format(hashes + spaces, str(int(percent * 100)))
                                 dir_text.delete(1.0, END)
                                 dir_text.insert(1.0, string)
-                                time.sleep(0.1)
                             i += 1
                             data = ssl_socket.recv(1024)
                     dir_text.insert(END, ssl_socket.recv(1024).decode())
