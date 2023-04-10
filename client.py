@@ -32,23 +32,41 @@ def select_dir():
                 ssl_socket.send(b'False')
             else:
                 ssl_socket.send(dir_path.encode())
-            dirs = ssl_socket.recv(1024).decode()
-            if len(dirs) == 0:
-                dir_text.delete(1.0, END)
-                dir_text.insert(1.0, "Empty Directory")
-            elif dirs[0] != 'M':
-                dirs = dirs.split(",")
-                print(dirs)
-                dir_text.delete(1.0, END)
-                for i in dirs:
-                    dir_text.insert(1.0, i + '\n')
+            flag = ssl_socket.recv(1024).decode()
+            if flag == 'True':
+                folder_list = ssl_socket.recv(1024).decode().split('*')
+                print(folder_list)
+                file_list = folder_list[1] if len(folder_list) == 2 else []
+                folder_list = folder_list[0]
+                
+                if folder_list == 'Empty' and file_list == '':
+                    dir_text.delete(1.0, END)
+                    dir_text.insert(1.0, "Empty directory")
+                else:
+                    dir_text.delete(1.0, END)
+                    
+                    if folder_list != 'Empty':
+                        folder_list = folder_list.split('|')
+                        for i in folder_list:
+                            dir_text.tag_config("my_tag", foreground="blue")
+                            dir_text.insert(1.0, i + '\n', "my_tag")
+                    if file_list != "":
+                        file_list = file_list.split('|')
+                        for i in file_list:
+                            dir_text.insert(1.0, i + '\n')
+                    
             else:
+                dirs = ssl_socket.recv(1024).decode()
                 dir_text.delete(1.0, END)
                 dir_text.insert(1.0, dirs)
                 
 
 def upload():
     filename = file_entry.get()
+    if not os.path.exists(filename):
+            dir_text.delete(1.0, END)
+            dir_text.insert(1.0, "File not found")
+            return
     size = os.path.getsize(filename)
     filename_1 = ""
     for i in filename[::-1]:
@@ -70,7 +88,7 @@ def upload():
                     ssl_socket.sendall(dir_path.encode())
                     
                 flag = ssl_socket.recv(1024).decode()
-                if bool(flag):
+                if flag == 'True':
                     ssl_socket.sendall(filename_1.encode())
                     bar_length = 100
                     step_size = max(size // 100, 1)
@@ -94,7 +112,7 @@ def upload():
                     dir_text.insert(END, ssl_socket.recv(1024).decode())
                 else:
                     dir_text.delete(1.0, END)
-                    dir_text.insert(1.0, f'File path => {dir_path} is wrong')
+                    dir_text.insert(1.0, f'Directory path => /SERVER/{dir_path} is wrong')
                     
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -122,10 +140,15 @@ def download():
                 else:
                     ssl_socket.sendall(dir_path.encode())
                 flag = ssl_socket.recv(1024).decode()
-                if bool(flag):
+                if flag == 'True':
                     print(filename)
                     ssl_socket.sendall(filename.encode())
-                    size = int(ssl_socket.recv().decode())
+                    data = ssl_socket.recv(1024)
+                    if(data == b'File not found'):
+                        dir_text.delete(1.0, END)
+                        dir_text.insert(1.0, 'File not found')
+                        return
+                    size = int(data.decode())
                     bar_length = 100
                     step_size = max(size // 100, 1)
                     progress = 0
@@ -151,7 +174,7 @@ def download():
                     dir_text.insert(END, ssl_socket.recv(1024).decode())
                 else:
                     dir_text.delete(1.0, END)
-                    dir_text.insert(1.0, f'File path => {dir_path} is wrong')
+                    dir_text.insert(1.0, f'File path => /SERVER/{dir_path}/{filename} is wrong')
                     
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()

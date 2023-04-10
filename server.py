@@ -8,8 +8,8 @@ context.load_cert_chain(certfile="server.crt", keyfile="server.key")
 
 dir_path = "./SERVER/" 
 
-HOST = '0.0.0.0'  # Standard loopback interface address (localhost)
-PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+HOST = '0.0.0.0'  
+PORT = 65432
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
@@ -26,6 +26,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
                     data = conn.recv(1024)
                     if data.decode() == 'SYN':
                         conn.send(b'ACK')
+                        
                     elif data.decode() == 'Dir':
                         data = conn.recv(1024).decode()
                         if data != 'False':     
@@ -36,15 +37,21 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
                             dir_path = dir_path[:9] + dir_path[10:]
                         if(dir_path[-1] != '/'):
                             dir_path += '/'
-                        # print("dir path ", dir_path)
                         if os.path.exists(dir_path):
                             dirs = os.listdir(dir_path)
-                            conn.sendall(",".join(dirs).encode())
+                            folder_list = [item for item in dirs if os.path.isdir(dir_path + item)]
+                            file_list = [item for item in dirs if os.path.isfile(dir_path + item)]
+                            conn.send(b'True')
+                            print(folder_list, file_list)
+                            sending = "|".join(folder_list).encode() if folder_list != [] else b"Empty"
+                            conn.sendall(sending  + b"*" + "|".join(file_list).encode())
+                            # conn.send()
+                            # conn.sendall()
                         else:
                             os.makedirs(dir_path)
                             dirs = f'Made a directory with path => {dir_path}'
+                            conn.send(b'False')
                             conn.sendall(dirs.encode())
-                        # print(dirs)
                         print('Path = ', dir_path)
                     
                     elif data.decode() == 'Send' or data.decode() == 'Take':
@@ -64,7 +71,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
                             # conn.sendall("".join(dirs).encode())
                             filename = conn.recv(1024).decode()
                             print('File =', filename)
-                             
                             if flag == 'Take':
                                 with open(dir_path + filename, 'wb') as f:
                                     while True:
@@ -76,17 +82,22 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
                                 conn.sendall(b'File sent successfully')
                             
                             elif flag == 'Send':
-                                size = os.path.getsize(dir_path + filename)
-                                conn.sendall(str(size).encode())
-                                print(dir_path + filename)
-                                with open(dir_path + filename, 'rb') as f:
-                                    data = f.read(1024)
-                                    while data:
-                                        conn.sendall(data)
+                                if not os.path.exists(dir_path + filename):
+                                    conn.send(b'File not found')
+                                else:
+                                    
+                                    size = os.path.getsize(dir_path + filename)
+                                    conn.sendall(str(size).encode())
+
+                                    print(dir_path + filename)
+                                    with open(dir_path + filename, 'rb') as f:
                                         data = f.read(1024)
-                                conn.sendall(b'DONE')
-                                print("Sent")
-                            conn.sendall(b'File recieved successfully')
+                                        while data:
+                                            conn.sendall(data)
+                                            data = f.read(1024)
+                                    conn.sendall(b'DONE')
+                                    print("Sent")
+                                    conn.sendall(b'File recieved successfully')
                         
                         else:
                             conn.sendall(b'False')            
