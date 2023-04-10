@@ -23,6 +23,7 @@ def select_file():
 
 def select_dir():
     dir_path = dir_input.get()
+    print(HOST, PORT)
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
         with client_context.wrap_socket(s, server_hostname=HOST) as ssl_socket:
             ssl_socket.connect((HOST, PORT))
@@ -161,7 +162,9 @@ def ip():
     
     def exit_func():
         
-        try:    
+        try:   
+            global HOST
+            global PORT 
             HOST = ip_entry.get()
             PORT = int(port_entry.get())
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
